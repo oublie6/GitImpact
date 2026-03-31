@@ -1,0 +1,15 @@
+{
+  "summary": "认证与任务执行模块有中等影响",
+  "changed_modules": ["auth", "worker"],
+  "impacted_interfaces": ["POST /api/auth/login", "POST /api/tasks"],
+  "impacted_configs": ["auth.mode", "opencode.attach_url"],
+  "impacted_scripts": ["scripts/dev-backend.sh"],
+  "impacted_tests": ["auth tests", "jwt middleware tests"],
+  "risks": ["mixed 模式回归风险"],
+  "backward_compatibility": "基本兼容",
+  "deployment_risks": ["依赖 opencode 可执行文件"],
+  "rollback_risks": ["数据库 schema 回滚成本"],
+  "verification_suggestions": ["执行认证全链路测试"],
+  "confidence": "medium",
+  "raw_notes": "示例数据"
+}
