@@ -1,0 +1,12 @@
+{
+  "task_name": "核心接口变更影响分析",
+  "mode": "same_repo_commits",
+  "old_repo_id": 1,
+  "old_ref": "main~3",
+  "new_repo_id": 1,
+  "new_ref": "main",
+  "generate_markdown": true,
+  "generate_structured": true,
+  "custom_focus": "重点关注登录鉴权和部署脚本",
+  "remark": "发布前评估"
+}

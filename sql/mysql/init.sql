@@ -1,0 +1,88 @@
+CREATE DATABASE IF NOT EXISTS gitimpact DEFAULT CHARSET utf8mb4;
+USE gitimpact;
+
+CREATE TABLE IF NOT EXISTS users (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(64) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  display_name VARCHAR(128),
+  email VARCHAR(128),
+  role VARCHAR(32) NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  source VARCHAR(32) NOT NULL,
+  last_login_at DATETIME NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_users_role ON users(role);
+
+CREATE TABLE IF NOT EXISTS repositories (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(128) NOT NULL UNIQUE,
+  repo_url VARCHAR(500) NOT NULL,
+  default_branch VARCHAR(128) NOT NULL,
+  local_cache_dir VARCHAR(500) NOT NULL,
+  auth_note VARCHAR(500),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS analysis_tasks (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  task_name VARCHAR(200) NOT NULL,
+  mode VARCHAR(64) NOT NULL,
+  old_repo_id BIGINT,
+  old_ref VARCHAR(128) NOT NULL,
+  new_repo_id BIGINT,
+  new_ref VARCHAR(128) NOT NULL,
+  generate_markdown TINYINT(1) DEFAULT 1,
+  generate_structured TINYINT(1) DEFAULT 1,
+  custom_focus TEXT,
+  remark VARCHAR(500),
+  status VARCHAR(32) NOT NULL,
+  error_message TEXT,
+  created_by BIGINT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_tasks_status ON analysis_tasks(status);
+
+CREATE TABLE IF NOT EXISTS analysis_reports (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  task_id BIGINT NOT NULL UNIQUE,
+  markdown_report LONGTEXT,
+  structured_report LONGTEXT,
+  raw_stdout LONGTEXT,
+  raw_stderr LONGTEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS task_logs (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  task_id BIGINT NOT NULL,
+  level VARCHAR(16) NOT NULL,
+  message TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_task_logs_task_id ON task_logs(task_id);
+
+CREATE TABLE IF NOT EXISTS task_artifacts (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  task_id BIGINT NOT NULL,
+  artifact_key VARCHAR(128) NOT NULL,
+  file_path VARCHAR(500) NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS system_settings (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  `key` VARCHAR(128) NOT NULL UNIQUE,
+  value TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT INTO users(username,password_hash,display_name,email,role,status,source)
+VALUES('admin','$2a$10$8aMnM3zRGswyfWCGfFTWUO/Jci8hV3dqjhkPyp6Vn7I.xXvDO4Tm2','默认管理员','admin@example.com','admin','active','db')
+ON DUPLICATE KEY UPDATE username=username;

@@ -1,0 +1,49 @@
+server:
+  port: "8080"
+auth:
+  mode: mixed
+  jwt_secret: "change-me"
+  token_expire_minutes: 120
+  enable_register: true
+  init_admin_enabled: true
+  config_users:
+    - username: config_admin
+      password_hash: "$2a$10$8aMnM3zRGswyfWCGfFTWUO/Jci8hV3dqjhkPyp6Vn7I.xXvDO4Tm2"
+      display_name: "Config Admin"
+      email: "config_admin@example.com"
+      role: admin
+      status: active
+      source: config
+      allow_dev_plain: false
+    - username: dev_plain
+      password_plain: "dev123456"
+      allow_dev_plain: true # 仅开发环境可用
+      display_name: "Dev Plain User"
+      role: user
+      status: active
+database:
+  type: mysql
+  dsn: "root:root@tcp(127.0.0.1:3306)/gitimpact?charset=utf8mb4&parseTime=True&loc=Local"
+  mysql:
+    host: "127.0.0.1"
+    port: "3306"
+    dbname: "gitimpact"
+    user: "root"
+    password: "root"
+  dameng:
+    host: "127.0.0.1"
+    port: "5236"
+    dbname: "GITIMPACT"
+    user: "SYSDBA"
+    password: "SYSDBA"
+opencode:
+  binary_path: "opencode"
+  attach_url: "http://127.0.0.1:4096"
+  default_model: "gpt-4.1"
+  default_agent: "impact"
+  timeout_seconds: 600
+workdir:
+  root: "./runtime"
+  repo_cache: "./runtime/repos"
+  artifacts: "./runtime/artifacts"
+  reports: "./runtime/reports"
