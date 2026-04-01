@@ -31,14 +31,12 @@ type AuthConfig struct {
 }
 
 type ConfigUser struct {
-	Username      string `yaml:"username"`
-	PasswordHash  string `yaml:"password_hash"`
-	PasswordPlain string `yaml:"password_plain"`
-	DisplayName   string `yaml:"display_name"`
-	Email         string `yaml:"email"`
-	Role          string `yaml:"role"`
-	Status        string `yaml:"status"`
-	AllowDevPlain bool   `yaml:"allow_dev_plain"`
+	Username    string `yaml:"username"`
+	Password    string `yaml:"password"`
+	DisplayName string `yaml:"display_name"`
+	Email       string `yaml:"email"`
+	Role        string `yaml:"role"`
+	Status      string `yaml:"status"`
 }
 
 type DatabaseConfig struct {
