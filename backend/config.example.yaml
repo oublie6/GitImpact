@@ -48,3 +48,6 @@ workdir:
   repo_cache: "./runtime/repos"
   artifacts: "./runtime/artifacts"
   reports: "./runtime/reports"
+frontend:
+  enabled: true
+  dist_dir: "./web/dist"

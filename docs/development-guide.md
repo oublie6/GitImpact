@@ -54,7 +54,11 @@ GITIMPACT_CONFIG=./config.yaml go run ./cmd/server
 ./scripts/dev-frontend.sh
 ```
 
-说明：当前脚本每次都会先执行 `npm install`，如果你只想快速启动，可以在 `frontend/` 目录手动执行 `npm run dev`。
+说明：
+
+- 当前脚本只在 `node_modules` 缺失时才执行 `npm install`
+- 前端开发时仍通过相对 `/api` 请求后端
+- Vite 会把 `/api` 和 `/healthz` 代理到 `http://127.0.0.1:8080`
 
 ## 常用脚本说明
 
@@ -67,6 +71,10 @@ GITIMPACT_CONFIG=./config.yaml go run ./cmd/server
 - `make build`：构建后端二进制到 `bin/gitimpact-backend`
 - `make test`：执行后端测试
 - `make build-linux-amd64`：交叉编译 Linux AMD64 二进制
+- `make frontend-build`：构建前端并同步到 `backend/web/dist`
+- `make release-build`：生成前后端联合发布目录
+- `make package-offline`：生成离线部署包
+- `make verify-offline`：验证前端离线部署链路
 - `make clean`：清理构建目录
 - `make docker-build`：构建后端镜像
 
@@ -189,3 +197,16 @@ curl -X POST http://127.0.0.1:8080/api/tasks \
 - `/tasks`：任务列表
 - `/tasks/:id`：任务详情
 - `/settings`：系统设置
+
+## 前端离线交付
+
+推荐命令：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/package-offline.ps1
+```
+
+更多细节见：
+
+- [前端离线部署指南](./frontend-offline-deployment.md)
+- [前端构建与打包指南](./frontend-build-and-package.md)

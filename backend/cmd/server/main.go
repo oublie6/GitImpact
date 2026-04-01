@@ -62,7 +62,7 @@ func main() {
 	workerInst := worker.NewTaskWorker(cfg, analyzer.NewCLIAnalyzer(cfg.OpenCode), taskRepo, repoRepo, reportRepo)
 
 	r := gin.Default()
-	router.Register(r, handler.NewAuthHandler(authSvc), handler.NewRepoHandler(repoSvc), handler.NewTaskHandler(taskSvc, workerInst), handler.NewSettingHandler(settingSvc), cfg.Auth.JWTSecret)
+	router.Register(r, handler.NewAuthHandler(authSvc), handler.NewRepoHandler(repoSvc), handler.NewTaskHandler(taskSvc, workerInst), handler.NewSettingHandler(settingSvc), cfg.Auth.JWTSecret, cfg.Frontend)
 
 	// Gin 默认监听在配置指定端口，启动失败直接终止进程，避免服务处于半初始化状态。
 	log.Fatal(r.Run(":" + cfg.Server.Port))

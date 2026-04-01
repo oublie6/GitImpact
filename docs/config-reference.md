@@ -10,6 +10,7 @@ auth:
 database:
 opencode:
 workdir:
+frontend:
 ```
 
 ## server
@@ -207,6 +208,35 @@ server:
 - 作用：报告目录
 
 说明：当前代码会创建这些目录，但真正落盘的任务中间文件主要在 `workdir.artifacts` 下；报告正文同时保存到数据库。
+
+## frontend
+
+### `frontend.enabled`
+
+- 类型：bool
+- 默认值：`false` 的零值会关闭托管；示例配置里建议设为 `true`
+- 必填：建议填写
+- 作用：是否启用后端静态托管前端
+
+### `frontend.dist_dir`
+
+- 类型：string
+- 默认值：`./web/dist`
+- 必填：否
+- 作用：后端读取前端 dist 的目录
+
+推荐值：
+
+```yaml
+frontend:
+  enabled: true
+  dist_dir: "./web/dist"
+```
+
+说明：
+
+- 开发/部署推荐都把前端构建产物同步到这个目录
+- 开启后，后端会同时处理静态资源和 SPA history fallback
 
 ## 不同环境配置建议
 

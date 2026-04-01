@@ -5,6 +5,7 @@ IMAGE ?= gitimpact/backend:$(VERSION)
 CONTAINER_NAME ?= gitimpact-backend
 RUN_ARGS ?= -p 8080:8080
 SERVICE_ARGS ?=
+POWERSHELL ?= powershell -ExecutionPolicy Bypass -File
 
 BACKEND_DIR := backend
 SERVER_PKG := ./cmd/server
@@ -27,7 +28,7 @@ SET_LINUX_ENV = CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOFLAGS="$(GOFLAGS)"
 CLEAN_DIRS = rm -rf $(BIN_DIR) dist tmp $(GO_TMP_DIR)
 endif
 
-.PHONY: build build-linux-amd64 test lint clean docker-build docker-run docker-push docker-build-run deploy
+.PHONY: build build-linux-amd64 test lint clean docker-build docker-run docker-push docker-build-run deploy frontend-build release-build package-offline verify-offline
 
 build:
 	$(MKDIR_BIN)
@@ -62,3 +63,15 @@ docker-push:
 docker-build-run: docker-build docker-run
 
 deploy: docker-build docker-push
+
+frontend-build:
+	$(POWERSHELL) scripts/build-frontend.ps1
+
+release-build:
+	$(POWERSHELL) scripts/build-release.ps1
+
+package-offline:
+	$(POWERSHELL) scripts/package-offline.ps1
+
+verify-offline:
+	$(POWERSHELL) scripts/verify-offline.ps1

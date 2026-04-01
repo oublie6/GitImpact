@@ -34,13 +34,13 @@
 ## API 调用方式
 
 - 统一使用 `src/api/http.ts` 创建的 axios 实例。
-- `baseURL` 固定为 `http://127.0.0.1:8080`。
+- `baseURL` 来自 `VITE_API_BASE_URL`，默认使用相对 `/api`。
 - 请求发出前会尝试从 `localStorage` 读取 `token` 并设置 `Authorization: Bearer <token>`。
 
 这意味着：
 
-- 当前前端没有通过环境变量切换 API 地址。
-- 若后端地址变化，需要手动修改 `http.ts` 或在二次开发时增加配置能力。
+- 开发模式与生产模式都可以保持同一套 API 路径。
+- 开发模式依赖 Vite 代理；生产模式依赖浏览器同源访问后端。
 
 ## 登录态管理
 

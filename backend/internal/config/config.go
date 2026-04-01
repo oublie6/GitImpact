@@ -19,6 +19,7 @@ type AppConfig struct {
 	Database DatabaseConfig `yaml:"database"`
 	OpenCode OpenCodeConfig `yaml:"opencode"`
 	Workdir  WorkdirConfig  `yaml:"workdir"`
+	Frontend FrontendConfig `yaml:"frontend"`
 }
 
 // ServerConfig 描述 HTTP 服务监听配置。
@@ -73,6 +74,13 @@ type WorkdirConfig struct {
 	Reports   string `yaml:"reports"`
 }
 
+// FrontendConfig 描述前端静态资源托管行为。
+// 当前推荐模式是前端先构建为 dist，再复制到 backend/web/dist 由后端统一托管。
+type FrontendConfig struct {
+	Enabled bool   `yaml:"enabled"`
+	DistDir string `yaml:"dist_dir"`
+}
+
 // TokenTTL 将分钟级配置转换为 time.Duration，供 JWT 生成复用。
 func (a AppConfig) TokenTTL() time.Duration {
 	return time.Duration(a.Auth.TokenExpireMinutes) * time.Minute
@@ -98,6 +106,9 @@ func Load(path string) (*AppConfig, error) {
 	}
 	if cfg.OpenCode.TimeoutSeconds == 0 {
 		cfg.OpenCode.TimeoutSeconds = 600
+	}
+	if cfg.Frontend.DistDir == "" {
+		cfg.Frontend.DistDir = "./web/dist"
 	}
 	return cfg, nil
 }

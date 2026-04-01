@@ -8,6 +8,7 @@
 2. 确认 `GITIMPACT_CONFIG` 指向的路径是否正确
 3. 查看启动日志里的 `load config failed` 或 `db init failed`
 4. 确认端口是否被占用
+5. 如果页面能打开 API 不能用，继续检查数据库初始化与后端日志
 
 ## 配置错误
 
@@ -85,6 +86,37 @@
 - Windows 下是否使用 Git Bash、WSL 或兼容的 `make`
 - `mkdir -p`、`rm -rf`、`chmod` 等命令是否可用
 - Go 交叉编译时是否显式设置 `CGO_ENABLED=0`
+
+## 前端离线部署后页面打不开
+
+排查：
+
+- `backend/web/dist/index.html` 是否存在
+- `frontend.enabled` 是否为 `true`
+- `frontend.dist_dir` 是否指向正确目录
+- 是否启动了新版本后端
+
+## 前端刷新二级路由 404
+
+排查：
+
+- 确认当前运行的后端是否包含前端 fallback 逻辑
+- 确认访问路径不是 `/api/*`
+- 确认 `index.html` 可被后端读取
+
+## 前端接口请求仍指向 localhost
+
+排查：
+
+- 检查是否使用了旧版 dist
+- 检查 built dist 中是否仍残留 `http://127.0.0.1:8080`
+- 重新执行 `scripts/build-frontend.ps1`
+
+## 离线环境为什么不需要 npm install
+
+因为离线环境只消费已经构建完成的 `dist`，不会重新执行 Vite 构建。
+
+如果你要在离线环境重新构建前端，那是“离线重建”问题，不属于当前默认部署链路。
 
 ## vendor / 依赖问题
 

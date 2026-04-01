@@ -3,9 +3,11 @@ dist/
 node_modules/
 frontend/node_modules/
 frontend/dist/
+backend/web/dist/
 backend/config.yaml
 tmp/
 artifacts/
 reports/
 /runtime/
+.tmp-go-build/
 .idea
