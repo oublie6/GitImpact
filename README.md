@@ -50,3 +50,19 @@
 ## 当前限制说明
 - 达梦当前采用 MySQL 兼容策略接入（可运行基线），生产环境建议替换为专用驱动与方言增强。
 - `ServerAnalyzer` 为占位实现。
+
+
+## Windows PowerShell 交叉编译 Linux x64
+```powershell
+$env:CGO_ENABLED="0"
+$env:GOOS="linux"
+$env:GOARCH="amd64"
+$env:GOFLAGS="-mod=vendor"
+cd backend
+go build -trimpath -ldflags "-s -w" -o ../bin/gitimpact-backend-linux-amd64 ./cmd/server
+```
+
+也可以直接在仓库根目录执行：`make build-linux-amd64`。
+
+## Docker 构建验证
+在仓库根目录执行：`make docker-build`。
