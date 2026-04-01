@@ -94,10 +94,7 @@ func (s *AuthService) validateConfigUser(username, password string) (*model.User
 		if cu.Status == model.UserStatusDisabled {
 			return nil, false
 		}
-		if cu.PasswordHash != "" && bcrypt.CompareHashAndPassword([]byte(cu.PasswordHash), []byte(password)) == nil {
-			return &model.User{ID: 0, Username: cu.Username, DisplayName: cu.DisplayName, Email: cu.Email, Role: normalizeRole(cu.Role), Status: cu.Status, Source: model.UserSourceConfig}, true
-		}
-		if cu.AllowDevPlain && cu.PasswordPlain != "" && cu.PasswordPlain == password {
+		if cu.Password != "" && cu.Password == password {
 			return &model.User{ID: 0, Username: cu.Username, DisplayName: cu.DisplayName, Email: cu.Email, Role: normalizeRole(cu.Role), Status: cu.Status, Source: model.UserSourceConfig}, true
 		}
 	}

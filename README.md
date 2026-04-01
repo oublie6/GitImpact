@@ -21,6 +21,11 @@
 - `opencode.*`
 - `workdir.*`
 
+### config_users 认证规则
+- 配置用户现在仅使用明文字段 `password` 进行登录校验（不再使用 `password_hash` / `password_plain` / `allow_dev_plain`）。
+- 数据库用户登录逻辑保持不变，仍使用 bcrypt 对 `password_hash` 做比对。
+- `auth.mode=mixed` 时，登录顺序为先 `config_users`，再 DB。
+
 ## 数据库初始化说明
 - MySQL: `mysql -uroot -proot < sql/mysql/init.sql`
 - 达梦: 使用达梦客户端在目标 schema 执行 `sql/dameng/init.sql`
