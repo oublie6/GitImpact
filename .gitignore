@@ -7,5 +7,5 @@ backend/config.yaml
 tmp/
 artifacts/
 reports/
-runtime/
+/runtime/
 .idea
