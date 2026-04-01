@@ -15,6 +15,7 @@ import (
 	"gitimpact/backend/internal/repository"
 )
 
+// TaskWorker 负责后台异步执行分析任务。
 type TaskWorker struct {
 	cfg        *config.AppConfig
 	analyzer   analyzer.Analyzer
@@ -59,19 +60,41 @@ func (w *TaskWorker) process(ctx context.Context, taskID uint) {
 		w.fail(task, err)
 		return
 	}
-	if err := w.writeMaterials(workDir, oldRepo.LocalCacheDir, task.OldRef, newRepo.LocalCacheDir, task.NewRef, task.CustomFocus); err != nil {
+	artifactPaths, err := w.writeMaterials(workDir, oldRepo.LocalCacheDir, task.OldRef, newRepo.LocalCacheDir, task.NewRef, task.CustomFocus)
+	if err != nil {
 		w.fail(task, err)
 		return
 	}
-
-	mdOut, mdErr, mdExecErr := w.analyzer.RunMarkdownReport(ctx, workDir)
-	jsonOut, jsonErr, _ := w.analyzer.RunStructuredReport(ctx, workDir)
-	report := &model.AnalysisReport{TaskID: taskID, MarkdownReport: mdOut, StructuredReport: jsonOut, RawStdout: strings.TrimSpace(mdOut + "\n" + jsonOut), RawStderr: strings.TrimSpace(mdErr + "\n" + jsonErr)}
-	_ = w.reportRepo.Upsert(taskID, report)
-	if mdExecErr != nil {
-		w.fail(task, mdExecErr)
-		return
+	for k, p := range artifactPaths {
+		_ = w.taskRepo.AddArtifact(&model.TaskArtifact{TaskID: taskID, ArtifactKey: k, FilePath: p})
 	}
+
+	mdOut, mdErr := "", ""
+	if task.GenerateMarkdown {
+		var mdExecErr error
+		mdOut, mdErr, mdExecErr = w.analyzer.RunMarkdownReport(ctx, workDir)
+		if mdExecErr != nil {
+			// 即使报错也要保留原始输出。
+			_ = w.reportRepo.Upsert(taskID, &model.AnalysisReport{TaskID: taskID, MarkdownReport: mdOut, RawStdout: mdOut, RawStderr: mdErr})
+			w.fail(task, mdExecErr)
+			return
+		}
+	}
+
+	jsonOut, jsonErr := "", ""
+	if task.GenerateStructured {
+		jsonOut, jsonErr, _ = w.analyzer.RunStructuredReport(ctx, workDir)
+	}
+
+	report := &model.AnalysisReport{
+		TaskID:           taskID,
+		MarkdownReport:   mdOut,
+		StructuredReport: jsonOut,
+		RawStdout:        strings.TrimSpace(mdOut + "\n" + jsonOut),
+		RawStderr:        strings.TrimSpace(mdErr + "\n" + jsonErr),
+	}
+	_ = w.reportRepo.Upsert(taskID, report)
+
 	task.Status = model.TaskStatusSuccess
 	task.ErrorMessage = ""
 	_ = w.taskRepo.Update(task)
@@ -100,9 +123,15 @@ func (w *TaskWorker) prepareRepo(repo *model.Repository, ref string) error {
 	return nil
 }
 
-func (w *TaskWorker) writeMaterials(workDir, oldDir, oldRef, newDir, newRef, focus string) error {
+func (w *TaskWorker) writeMaterials(workDir, oldDir, oldRef, newDir, newRef, focus string) (map[string]string, error) {
+	paths := make(map[string]string)
 	write := func(name, content string) error {
-		return os.WriteFile(filepath.Join(workDir, name), []byte(content), 0o644)
+		full := filepath.Join(workDir, name)
+		if err := os.WriteFile(full, []byte(content), 0o644); err != nil {
+			return err
+		}
+		paths[name] = full
+		return nil
 	}
 	if out, err := exec.Command("git", "-C", newDir, "diff", "--name-only", oldRef, newRef).CombinedOutput(); err == nil {
 		_ = write("changed_files.txt", string(out))
@@ -114,10 +143,16 @@ func (w *TaskWorker) writeMaterials(workDir, oldDir, oldRef, newDir, newRef, foc
 		_ = write("commit_log.txt", string(out))
 	}
 	manifest := fmt.Sprintf("# Repo Manifest\n- old_ref: %s\n- new_ref: %s\n- old_repo: %s\n- new_repo: %s\n", oldRef, newRef, oldDir, newDir)
-	_ = write("repo_manifest.md", manifest)
+	if err := write("repo_manifest.md", manifest); err != nil {
+		return nil, err
+	}
 	prompt := "请结合 changed_files.txt、diff.patch、commit_log.txt、repo_manifest.md 生成 Markdown 影响分析报告。\n关注点: " + focus
 	promptJSON := "请输出结构化 JSON，字段包括 summary/changed_modules/impacted_interfaces/impacted_configs/impacted_scripts/impacted_tests/risks/backward_compatibility/deployment_risks/rollback_risks/verification_suggestions/confidence/raw_notes。\n关注点: " + focus
-	_ = write("analysis_prompt.md", prompt)
-	_ = write("analysis_prompt_json.md", promptJSON)
-	return nil
+	if err := write("analysis_prompt.md", prompt); err != nil {
+		return nil, err
+	}
+	if err := write("analysis_prompt_json.md", promptJSON); err != nil {
+		return nil, err
+	}
+	return paths, nil
 }
