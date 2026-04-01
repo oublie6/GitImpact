@@ -64,7 +64,7 @@ func TestDisabledUserLoginFail(t *testing.T) {
 
 func TestConfigModeLogin(t *testing.T) {
 	svc, _ := newAuthSvc(t, "config")
-	svc.cfg.Auth.ConfigUsers = []config.ConfigUser{{Username: "cfg", PasswordPlain: "p", AllowDevPlain: true, Status: model.UserStatusActive, Role: model.RoleAdmin}}
+	svc.cfg.Auth.ConfigUsers = []config.ConfigUser{{Username: "cfg", Password: "p", Status: model.UserStatusActive, Role: model.RoleAdmin}}
 	u, err := svc.ValidateLogin("cfg", "p")
 	if err != nil || u.Source != model.UserSourceConfig {
 		t.Fatal("expect config user")
@@ -73,7 +73,7 @@ func TestConfigModeLogin(t *testing.T) {
 
 func TestMixedModeLoginOrder(t *testing.T) {
 	svc, repo := newAuthSvc(t, "mixed")
-	svc.cfg.Auth.ConfigUsers = []config.ConfigUser{{Username: "same", PasswordPlain: "cfgp", AllowDevPlain: true, Status: model.UserStatusActive, Role: model.RoleAdmin}}
+	svc.cfg.Auth.ConfigUsers = []config.ConfigUser{{Username: "same", Password: "cfgp", Status: model.UserStatusActive, Role: model.RoleAdmin}}
 	hash, _ := bcrypt.GenerateFromPassword([]byte("dbp"), bcrypt.DefaultCost)
 	_ = repo.Create(&model.User{Username: "same", PasswordHash: string(hash), Status: model.UserStatusActive, Role: model.RoleUser, Source: model.UserSourceDB})
 	u, err := svc.ValidateLogin("same", "cfgp")

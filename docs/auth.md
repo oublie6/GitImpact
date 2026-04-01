@@ -7,5 +7,6 @@
 约束：
 - 使用 JWT Bearer Token，含过期时间。
 - disabled 用户禁止登录。
-- 密码仅存 `password_hash`。
-- `password_plain` 仅用于开发模式并需显式 `allow_dev_plain=true`。
+- 配置用户（`config_users`）使用明文 `password` 字段校验。
+- 数据库用户密码仍存 `password_hash`，并通过 bcrypt 校验。
+- `mixed` 模式登录顺序固定为：先 `config_users`，后 DB。
