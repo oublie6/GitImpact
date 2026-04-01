@@ -1,86 +1,204 @@
-# GitImpact（Git 变更影响分析与报告平台）
+# GitImpact
 
-## 快速启动
-1. 初始化：`./scripts/init-dev.sh`
-2. 准备数据库：MySQL 执行 `sql/mysql/init.sql`（或达梦执行 `sql/dameng/init.sql`）
-3. 后端启动：`./scripts/dev-backend.sh`
-4. 前端启动：`./scripts/dev-frontend.sh`
+GitImpact 是一个面向代码变更影响分析的前后端一体化平台。它接收两个 Git 引用之间的差异，自动准备分析材料，调用 OpenCode CLI 生成 Markdown 与结构化 JSON 报告，并把任务状态、日志、产物和报告统一保存，便于研发、测试和发布前评估使用。
 
-## 配置说明
-后端读取 `backend/config.yaml`，可参考 `backend/config.example.yaml`，核心字段包括：
-- `auth.mode`（config/db/mixed）
-- `auth.jwt_secret`
-- `auth.token_expire_minutes`
-- `auth.enable_register`
-- `auth.init_admin_enabled`
-- `auth.config_users`
-- `database.type`（mysql/dameng）
-- `database.dsn`
-- `database.mysql.*`
-- `database.dameng.*`
-- `opencode.*`
-- `workdir.*`
+## 项目解决的问题
 
-### config_users 认证规则
-- 配置用户现在仅使用明文字段 `password` 进行登录校验（不再使用 `password_hash` / `password_plain` / `allow_dev_plain`）。
-- 数据库用户登录逻辑保持不变，仍使用 bcrypt 对 `password_hash` 做比对。
-- `auth.mode=mixed` 时，登录顺序为先 `config_users`，再 DB。
+- 让代码评审、发布评估和回归范围分析不再依赖口头经验。
+- 把 `git diff`、提交历史、影响点提示词、分析报告沉淀为可追溯任务。
+- 为团队提供一个可以二次开发的分析工作台，而不是一次性脚本。
 
-## 数据库初始化说明
-- MySQL: `mysql -uroot -proot < sql/mysql/init.sql`
-- 达梦: 使用达梦客户端在目标 schema 执行 `sql/dameng/init.sql`
+## 核心能力
 
-### 数据库驱动与连接方式
-- `database.type=mysql`：使用 `gorm.io/driver/mysql`，连接串来自 `database.dsn`。
-- `database.type=dameng`：使用 `github.com/godoes/gorm-dameng`。
-  - 若 `database.dsn` 非空，直接使用该达梦 DSN（如 `dm://SYSDBA:SYSDBA@127.0.0.1:5236?schema=SYSDBA`）。
-  - 若 `database.dsn` 为空，则按 `database.dameng.host/port/user/password/dbname` 自动拼接，
-    其中 `dbname` 会映射为达梦 DSN 的 `schema` 参数。
+- 用户注册、登录、JWT 鉴权，以及 `config|db|mixed` 三种认证模式。
+- 维护待分析仓库记录，并支持手动 `git clone` / `git fetch` 更新缓存。
+- 创建分析任务，比较两个仓库引用之间的差异。
+- 生成 `changed_files.txt`、`diff.patch`、`commit_log.txt`、`repo_manifest.md`、提示词文件等任务材料。
+- 调用 OpenCode CLI 生成 Markdown 报告和结构化 JSON 报告。
+- 保存任务状态、日志、产物路径、原始 stdout/stderr 和最终报告。
+- 提供一个可运行但仍偏原型化的 Vue 前端界面。
 
-## 默认管理员说明
-- 当 `auth.init_admin_enabled=true` 且模式非 config 时，后端启动会尝试初始化 admin 用户（若不存在）。
-- SQL 也提供了默认 admin 初始化语句。
-- 默认管理员用户名 `admin`，默认密码请通过配置或 SQL 初始化后立即重置。
+## 系统架构总览
 
-## OpenCode 集成说明
-- 默认 `CLIAnalyzer` 调用 `opencode run`。
-- 若配置 `opencode.attach_url`，将优先使用 `opencode run --attach <url>`。
-- 系统先生成分析材料：`changed_files.txt`、`diff.patch`、`commit_log.txt`、`repo_manifest.md`、`analysis_prompt.md`。
-- 若结构化 JSON 生成失败，依旧保存 Markdown 与原始 stdout/stderr。
-- `ServerAnalyzer` 当前为**占位实现**。
-
-## vendor 使用说明
-- 后端构建/测试默认通过 `GOFLAGS=-mod=vendor` 执行。
-- 已提供 `backend/vendor/` 目录，Makefile 中默认开启 vendor 模式。
-
-## Makefile 使用说明
-- `make build`：构建后端二进制到 `bin/`
-- `make test`：执行后端测试（vendor 模式）
-- `make build-linux-amd64`：交叉编译 Linux amd64 后端二进制到 `bin/`
-- `make clean`：清理构建产物
-- `make docker-build` / `make docker-run` / `make docker-push` / `make docker-build-run` / `make deploy`：容器与部署入口
-
-## Docker 构建
-- 直接执行：`docker build -t gitimpact/backend:test .`
-- 或使用 Makefile：`make docker-build`
-- Dockerfile 在 builder 阶段使用 `backend/vendor` + `GOFLAGS=-mod=vendor` 离线构建，不拉取远端依赖。
-
-## 当前限制说明
-- 达梦已切换为专用 GORM 驱动接入（`github.com/godoes/gorm-dameng`）。
-- `ServerAnalyzer` 为占位实现。
-
-
-## Windows PowerShell 交叉编译 Linux x64
-```powershell
-$env:CGO_ENABLED="0"
-$env:GOOS="linux"
-$env:GOARCH="amd64"
-$env:GOFLAGS="-mod=vendor"
-cd backend
-go build -trimpath -ldflags "-s -w" -o ../bin/gitimpact-backend-linux-amd64 ./cmd/server
+```mermaid
+flowchart LR
+    User["用户 / 浏览器"] --> Frontend["Vue 前端"]
+    Frontend --> Backend["Gin 后端 API"]
+    Backend --> Auth["AuthService"]
+    Backend --> Repo["RepositoryService"]
+    Backend --> Task["TaskService"]
+    Task --> Worker["TaskWorker"]
+    Worker --> Git["本地 Git 缓存"]
+    Worker --> OpenCode["OpenCode CLI"]
+    Backend --> DB["MySQL / 达梦"]
+    Worker --> Artifacts["runtime/artifacts"]
+    Worker --> Reports["analysis_reports + runtime/reports"]
 ```
 
-也可以直接在仓库根目录执行：`make build-linux-amd64`。
+图中的关键事实与当前代码保持一致：
 
-## Docker 构建验证
-在仓库根目录执行：`docker build -t gitimpact/backend:test .`。
+- 后端入口在 `backend/cmd/server/main.go`。
+- 任务执行是进程内 goroutine worker，不是独立队列系统。
+- OpenCode 当前真实实现只有 CLIAnalyzer；ServerAnalyzer 仍是占位实现。
+
+## 技术栈
+
+- 后端：Go 1.22、Gin、GORM、JWT、bcrypt
+- 数据库：MySQL、达梦
+- 前端：Vue 3、Vite、Pinia、Vue Router、Element Plus
+- 构建：Makefile、Dockerfile
+- 分析引擎：OpenCode CLI
+
+## 目录结构
+
+```text
+.
+├─ backend/              后端代码、配置示例、vendor 依赖
+├─ frontend/             前端原型界面
+├─ docs/                 面向使用者与维护者的详细文档
+├─ scripts/              开发辅助脚本
+├─ sql/                  MySQL / 达梦初始化 SQL
+├─ examples/             示例任务与示例报告
+├─ Makefile              构建、测试、Docker 命令入口
+└─ Dockerfile            后端镜像构建文件
+```
+
+更细的目录职责说明见：
+
+- [系统总览](./docs/architecture-overview.md)
+- [后端架构](./docs/backend-architecture.md)
+- [前端架构](./docs/frontend-architecture.md)
+
+## 快速启动
+
+### 1. 准备环境
+
+- Go 1.22+
+- Node.js 18+
+- npm 9+
+- Git
+- MySQL 8+ 或 达梦数据库
+- OpenCode CLI，可通过 `opencode` 命令访问
+
+### 2. 初始化项目
+
+```bash
+./scripts/init-dev.sh
+```
+
+脚本会复制 `backend/config.example.yaml` 为 `backend/config.yaml`。
+
+### 3. 初始化数据库
+
+MySQL：
+
+```bash
+mysql -uroot -proot < sql/mysql/init.sql
+```
+
+达梦：
+
+- 使用达梦客户端连接目标 schema。
+- 执行 `sql/dameng/init.sql`。
+
+### 4. 准备后端配置
+
+按需修改 `backend/config.yaml`。最少要确认：
+
+- `auth.mode`
+- `auth.jwt_secret`
+- `database.type`
+- `database.dsn` 或 `database.dameng.*`
+- `opencode.binary_path`
+- `workdir.*`
+
+完整字段说明见 [配置参考](./docs/config-reference.md)。
+
+### 5. 启动后端
+
+```bash
+./scripts/dev-backend.sh
+```
+
+或：
+
+```bash
+cd backend
+GITIMPACT_CONFIG=./config.yaml go run ./cmd/server
+```
+
+### 6. 启动前端
+
+```bash
+./scripts/dev-frontend.sh
+```
+
+前端默认运行在 `http://127.0.0.1:5173`，后端默认运行在 `http://127.0.0.1:8080`。
+
+## 最小可运行示例
+
+最快验证链路的方法：
+
+1. 使用 MySQL 初始化 `gitimpact` 库。
+2. 保持 `backend/config.yaml` 中 `auth.mode: mixed`，并保留示例里的 `config_users`。
+3. 启动后端。
+4. 调用登录接口：
+
+```bash
+curl -X POST http://127.0.0.1:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d "{\"username\":\"config_admin\",\"password\":\"Admin@123456\"}"
+```
+
+5. 创建一个仓库记录，`local_cache_dir` 指向本机可写目录。
+6. 执行仓库抓取接口。
+7. 用 [examples/sample-task.json](./examples/sample-task.json) 的结构创建任务。
+8. 轮询任务详情、日志和报告接口。
+
+完整演示路径见 [开发指南](./docs/development-guide.md)。
+
+## 配置说明入口
+
+- [配置参考](./docs/config-reference.md)
+- [数据库设计](./docs/database-design.md)
+- [部署指南](./docs/deployment-guide.md)
+
+## API 文档入口
+
+- [API 参考](./docs/api-reference.md)
+- [认证说明](./docs/backend-architecture.md#请求处理链路)
+
+## 开发调试说明入口
+
+- [开发指南](./docs/development-guide.md)
+- [任务链路说明](./docs/task-flow.md)
+- [OpenCode 集成说明](./docs/opencode-integration.md)
+- [排障指南](./docs/troubleshooting.md)
+
+## 常见问题入口
+
+- [FAQ](./docs/faq.md)
+- [术语表](./docs/glossary.md)
+
+## 部署说明入口
+
+- [部署指南](./docs/deployment-guide.md)
+- [Docker 构建说明](./docs/deployment-guide.md#docker-构建与运行)
+
+## vendor 依赖策略
+
+- 后端默认通过 `GOFLAGS=-mod=vendor` 构建与测试。
+- `backend/vendor/` 已提交到仓库，Dockerfile 也按 vendor 模式构建。
+- 这意味着正常构建路径不应在构建时联网拉取 Go 依赖。
+- 如果 `go.mod` / `go.sum` 与 `vendor/` 不一致，需要显式执行 `go mod vendor` 同步。
+
+## 构建与测试
+
+```bash
+make build
+make test
+make build-linux-amd64
+docker build -t gitimpact/backend:test .
+```
+
+构建细节与交叉编译说明见 [开发指南](./docs/development-guide.md) 和 [部署指南](./docs/deployment-guide.md)。

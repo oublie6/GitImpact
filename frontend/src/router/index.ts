@@ -1,3 +1,5 @@
+// 前端路由表。
+// 当前页面较少，认证守卫直接在全局 beforeEach 中完成。
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import LoginView from '../views/LoginView.vue'
@@ -19,9 +21,11 @@ const router = createRouter({ history: createWebHistory(), routes: [
   { path: '/tasks/:id', component: TaskDetailView },
   { path: '/settings', component: SettingsView }
 ]})
+
 router.beforeEach((to) => {
   const auth = useAuthStore()
   if (!auth.token && !['/login', '/register'].includes(to.path)) return '/login'
   if (auth.token && to.path === '/login') return '/'
 })
+
 export default router

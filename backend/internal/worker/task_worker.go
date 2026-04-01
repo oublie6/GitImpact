@@ -1,3 +1,6 @@
+// task_worker.go 负责异步执行分析任务的完整流水线。
+//
+// 它串联仓库准备、材料生成、OpenCode 调用、报告持久化和任务状态流转。
 package worker
 
 import (
@@ -28,8 +31,12 @@ func NewTaskWorker(cfg *config.AppConfig, a analyzer.Analyzer, tr *repository.Ta
 	return &TaskWorker{cfg: cfg, analyzer: a, taskRepo: tr, repoRepo: rr, reportRepo: rp}
 }
 
+// Enqueue 以 goroutine 方式异步启动任务处理。
+// 当前实现是进程内 worker，服务重启后不会自动恢复中断任务。
 func (w *TaskWorker) Enqueue(taskID uint) { go w.process(context.Background(), taskID) }
 
+// process 执行单个任务的主流程。
+// 核心步骤：读取任务 -> 切换状态 -> 准备仓库 -> 生成材料 -> 调用分析器 -> 保存报告。
 func (w *TaskWorker) process(ctx context.Context, taskID uint) {
 	task, err := w.taskRepo.GetByID(taskID)
 	if err != nil {
@@ -50,8 +57,11 @@ func (w *TaskWorker) process(ctx context.Context, taskID uint) {
 		return
 	}
 
+	// 任务材料目录按任务 ID 和时间戳分隔，避免重复执行时相互覆盖。
 	workDir := filepath.Join(w.cfg.Workdir.Artifacts, fmt.Sprintf("task_%d_%d", task.ID, time.Now().Unix()))
 	_ = os.MkdirAll(workDir, 0o755)
+
+	// old/new 两侧仓库都会被切到指定 ref，保证 diff 与 log 的输入一致。
 	if err := w.prepareRepo(oldRepo, task.OldRef); err != nil {
 		w.fail(task, err)
 		return
@@ -83,6 +93,7 @@ func (w *TaskWorker) process(ctx context.Context, taskID uint) {
 
 	jsonOut, jsonErr := "", ""
 	if task.GenerateStructured {
+		// 结构化报告失败时当前不会让任务整体失败，而是尽量保留 Markdown 结果。
 		jsonOut, jsonErr, _ = w.analyzer.RunStructuredReport(ctx, workDir)
 	}
 
@@ -101,6 +112,7 @@ func (w *TaskWorker) process(ctx context.Context, taskID uint) {
 	_ = w.taskRepo.AddLog(&model.TaskLog{TaskID: taskID, Level: "INFO", Message: "task completed"})
 }
 
+// fail 统一写入失败状态、错误消息与任务日志。
 func (w *TaskWorker) fail(task *model.AnalysisTask, err error) {
 	task.Status = model.TaskStatusFailed
 	task.ErrorMessage = err.Error()
@@ -108,6 +120,8 @@ func (w *TaskWorker) fail(task *model.AnalysisTask, err error) {
 	_ = w.taskRepo.AddLog(&model.TaskLog{TaskID: task.ID, Level: "ERROR", Message: err.Error()})
 }
 
+// prepareRepo 确保仓库缓存存在，并切到任务要求的 ref。
+// 这里会直接操作 LocalCacheDir，对同一仓库并发任务存在 ref 切换相互影响的风险。
 func (w *TaskWorker) prepareRepo(repo *model.Repository, ref string) error {
 	if _, err := os.Stat(filepath.Join(repo.LocalCacheDir, ".git")); err != nil {
 		if out, err := exec.Command("git", "clone", repo.RepoURL, repo.LocalCacheDir).CombinedOutput(); err != nil {
@@ -123,6 +137,8 @@ func (w *TaskWorker) prepareRepo(repo *model.Repository, ref string) error {
 	return nil
 }
 
+// writeMaterials 生成 OpenCode 分析所需的输入文件。
+// 生成失败时会中断任务；单个 git 命令失败时则只跳过对应材料文件。
 func (w *TaskWorker) writeMaterials(workDir, oldDir, oldRef, newDir, newRef, focus string) (map[string]string, error) {
 	paths := make(map[string]string)
 	write := func(name, content string) error {
@@ -142,6 +158,8 @@ func (w *TaskWorker) writeMaterials(workDir, oldDir, oldRef, newDir, newRef, foc
 	if out, err := exec.Command("git", "-C", newDir, "log", "--oneline", oldRef+".."+newRef).CombinedOutput(); err == nil {
 		_ = write("commit_log.txt", string(out))
 	}
+
+	// manifest 与 prompt 是项目自定义的分析上下文，帮助 OpenCode 理解当前任务边界。
 	manifest := fmt.Sprintf("# Repo Manifest\n- old_ref: %s\n- new_ref: %s\n- old_repo: %s\n- new_repo: %s\n", oldRef, newRef, oldDir, newDir)
 	if err := write("repo_manifest.md", manifest); err != nil {
 		return nil, err

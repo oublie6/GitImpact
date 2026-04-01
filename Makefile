@@ -11,25 +11,44 @@ SERVER_PKG := ./cmd/server
 BIN_DIR := bin
 BIN_PATH := $(BIN_DIR)/$(APP_NAME)
 LINUX_AMD64_BIN_PATH := $(BIN_DIR)/$(APP_NAME)-linux-amd64
+GO_TMP_DIR := .tmp-go-build
+
+ifeq ($(OS),Windows_NT)
+MKDIR_BIN = if not exist "$(BIN_DIR)" mkdir "$(BIN_DIR)"
+MKDIR_GO_TMP = if not exist "$(GO_TMP_DIR)" mkdir "$(GO_TMP_DIR)"
+SET_GOFLAGS = set "GOFLAGS=$(GOFLAGS)" && set "GOTMPDIR=../$(GO_TMP_DIR)" &&
+SET_LINUX_ENV = set "CGO_ENABLED=0" && set "GOOS=linux" && set "GOARCH=amd64" && set "GOFLAGS=$(GOFLAGS)" && set "GOTMPDIR=../$(GO_TMP_DIR)" &&
+CLEAN_DIRS = powershell -NoProfile -Command "foreach ($$p in @('$(BIN_DIR)','dist','tmp','$(GO_TMP_DIR)')) { if (Test-Path $$p) { Remove-Item -Recurse -Force $$p } }"
+else
+MKDIR_BIN = mkdir -p $(BIN_DIR)
+MKDIR_GO_TMP = mkdir -p $(GO_TMP_DIR)
+SET_GOFLAGS = GOFLAGS="$(GOFLAGS)"
+SET_LINUX_ENV = CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOFLAGS="$(GOFLAGS)"
+CLEAN_DIRS = rm -rf $(BIN_DIR) dist tmp $(GO_TMP_DIR)
+endif
 
 .PHONY: build build-linux-amd64 test lint clean docker-build docker-run docker-push docker-build-run deploy
 
 build:
-	mkdir -p $(BIN_DIR)
-	cd $(BACKEND_DIR) && GOFLAGS="$(GOFLAGS)" go build -trimpath -ldflags "-s -w" -o ../$(BIN_PATH) $(SERVER_PKG)
+	$(MKDIR_BIN)
+	$(MKDIR_GO_TMP)
+	cd $(BACKEND_DIR) && $(SET_GOFLAGS) go build -trimpath -ldflags "-s -w" -o ../$(BIN_PATH) $(SERVER_PKG)
 
 build-linux-amd64:
-	mkdir -p $(BIN_DIR)
-	cd $(BACKEND_DIR) && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOFLAGS="$(GOFLAGS)" go build -trimpath -ldflags "-s -w" -o ../$(LINUX_AMD64_BIN_PATH) $(SERVER_PKG)
+	$(MKDIR_BIN)
+	$(MKDIR_GO_TMP)
+	cd $(BACKEND_DIR) && $(SET_LINUX_ENV) go build -trimpath -ldflags "-s -w" -o ../$(LINUX_AMD64_BIN_PATH) $(SERVER_PKG)
 
 test:
-	cd $(BACKEND_DIR) && GOFLAGS="$(GOFLAGS)" go test ./...
+	$(MKDIR_GO_TMP)
+	cd $(BACKEND_DIR) && $(SET_GOFLAGS) go test ./...
 
 lint:
-	cd $(BACKEND_DIR) && GOFLAGS="$(GOFLAGS)" golangci-lint run ./...
+	$(MKDIR_GO_TMP)
+	cd $(BACKEND_DIR) && $(SET_GOFLAGS) golangci-lint run ./...
 
 clean:
-	rm -rf $(BIN_DIR) dist tmp
+	$(CLEAN_DIRS)
 
 docker-build:
 	docker build -t $(IMAGE) .

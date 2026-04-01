@@ -1,3 +1,4 @@
+// jwt.go 提供基于 Bearer Token 的 Gin 中间件。
 package middleware
 
 import (
@@ -9,6 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// JWT 校验 Authorization 头中的 Bearer Token，并把用户信息写入上下文。
+// 当前实现只做签名与 claims 校验，不维护登出黑名单。
 func JWT(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		h := c.GetHeader("Authorization")

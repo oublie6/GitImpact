@@ -1,3 +1,4 @@
+// repo_handler.go 提供仓库增改查与手动拉取接口。
 package handler
 
 import (
@@ -10,10 +11,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// RepoHandler 负责仓库资源的 HTTP 适配。
 type RepoHandler struct{ svc *service.RepositoryService }
 
+// NewRepoHandler 创建仓库处理器。
 func NewRepoHandler(s *service.RepositoryService) *RepoHandler { return &RepoHandler{svc: s} }
 
+// Create 创建仓库记录。
 func (h *RepoHandler) Create(c *gin.Context) {
 	var req model.Repository
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -26,6 +30,8 @@ func (h *RepoHandler) Create(c *gin.Context) {
 	}
 	response.OK(c, req)
 }
+
+// Update 更新指定仓库记录。
 func (h *RepoHandler) Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	var req model.Repository
@@ -40,6 +46,8 @@ func (h *RepoHandler) Update(c *gin.Context) {
 	}
 	response.OK(c, req)
 }
+
+// List 返回仓库列表。
 func (h *RepoHandler) List(c *gin.Context) {
 	list, err := h.svc.List()
 	if err != nil {
@@ -48,6 +56,8 @@ func (h *RepoHandler) List(c *gin.Context) {
 	}
 	response.OK(c, list)
 }
+
+// Detail 返回单个仓库详情。
 func (h *RepoHandler) Detail(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	r, err := h.svc.GetByID(uint(id))
@@ -57,6 +67,9 @@ func (h *RepoHandler) Detail(c *gin.Context) {
 	}
 	response.OK(c, r)
 }
+
+// Fetch 触发仓库缓存同步。
+// 这里不会创建任务，只负责 git clone/fetch。
 func (h *RepoHandler) Fetch(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	r, err := h.svc.GetByID(uint(id))

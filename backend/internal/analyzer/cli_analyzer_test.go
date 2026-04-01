@@ -1,3 +1,4 @@
+// cli_analyzer_test.go 验证 OpenCode CLI 参数拼装是否符合配置预期。
 package analyzer
 
 import (

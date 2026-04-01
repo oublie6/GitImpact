@@ -1,2 +1,26 @@
-<template><el-card><el-form @submit.prevent="submit"><el-input v-model="username" placeholder="用户名" /><el-input v-model="password" type="password" placeholder="密码" /><el-button type="primary" @click="submit">登录</el-button></el-form></el-card></template>
-<script setup lang="ts">import { ref } from 'vue';import { useRouter } from 'vue-router';import { useAuthStore } from '../stores/auth';const r=useRouter();const s=useAuthStore();const username=ref('');const password=ref('');const submit=async()=>{await s.login(username.value,password.value);r.push('/')}</script>
+<template>
+  <el-card>
+    <el-form @submit.prevent="submit">
+      <el-input v-model="username" placeholder="用户名" />
+      <el-input v-model="password" type="password" placeholder="密码" />
+      <el-button type="primary" @click="submit">登录</el-button>
+    </el-form>
+  </el-card>
+</template>
+
+<script setup lang="ts">
+// 登录页：提交凭证后写入 auth store，并跳转到首页。
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+
+const r = useRouter()
+const s = useAuthStore()
+const username = ref('')
+const password = ref('')
+
+const submit = async () => {
+  await s.login(username.value, password.value)
+  r.push('/')
+}
+</script>

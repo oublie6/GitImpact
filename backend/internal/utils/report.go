@@ -1,3 +1,4 @@
+// report.go 定义结构化报告推荐格式及其解析方法。
 package utils
 
 import "encoding/json"
@@ -19,6 +20,8 @@ type StructuredReport struct {
 	RawNotes                string   `json:"raw_notes"`
 }
 
+// ParseStructuredJSON 解析结构化报告 JSON 字符串。
+// 如果 OpenCode 输出的字段不完整，解析仍可能成功，只是缺失字段保持零值。
 func ParseStructuredJSON(s string) (*StructuredReport, error) {
 	r := &StructuredReport{}
 	if err := json.Unmarshal([]byte(s), r); err != nil {

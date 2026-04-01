@@ -1,3 +1,4 @@
+// task_service_test.go 验证任务创建时的默认状态处理。
 package service
 
 import (

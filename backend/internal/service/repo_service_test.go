@@ -1,3 +1,4 @@
+// repo_service_test.go 覆盖仓库服务的基本读写行为。
 package service
 
 import (

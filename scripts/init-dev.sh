@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# 初始化本地开发环境的最小脚本：
+# 1. 确保脚本本身可执行
+# 2. 为后端准备 config.yaml
 set -euo pipefail
 cd "$(dirname "$0")/.."
 chmod +x scripts/*.sh

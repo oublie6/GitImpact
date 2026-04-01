@@ -1,3 +1,4 @@
+// auth_handler_test.go 覆盖认证接口的基础 happy path 与鉴权失败场景。
 package handler
 
 import (

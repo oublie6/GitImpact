@@ -1,3 +1,4 @@
+// auth_service_test.go 覆盖注册、登录、配置用户优先级等认证规则。
 package service
 
 import (

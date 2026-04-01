@@ -1,3 +1,4 @@
+// report_test.go 验证结构化报告 JSON 的解析成功与失败分支。
 package utils
 
 import "testing"

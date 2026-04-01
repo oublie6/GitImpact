@@ -1,3 +1,4 @@
+// Package analyzer 定义影响分析器抽象与具体实现。
 package analyzer
 
 import "context"

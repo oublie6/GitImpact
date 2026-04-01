@@ -1,3 +1,4 @@
+// jwt_test.go 验证 JWT 中间件在合法与缺失令牌下的行为。
 package middleware
 
 import (

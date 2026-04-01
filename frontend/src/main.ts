@@ -1,3 +1,4 @@
+// 前端应用入口：注册 Pinia、Vue Router 和 Element Plus。
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'

@@ -1,3 +1,4 @@
+// config_test.go 验证配置加载与默认值填充行为。
 package config
 
 import (
