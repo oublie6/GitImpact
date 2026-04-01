@@ -30,6 +30,13 @@
 - MySQL: `mysql -uroot -proot < sql/mysql/init.sql`
 - 达梦: 使用达梦客户端在目标 schema 执行 `sql/dameng/init.sql`
 
+### 数据库驱动与连接方式
+- `database.type=mysql`：使用 `gorm.io/driver/mysql`，连接串来自 `database.dsn`。
+- `database.type=dameng`：使用 `github.com/godoes/gorm-dameng`。
+  - 若 `database.dsn` 非空，直接使用该达梦 DSN（如 `dm://SYSDBA:SYSDBA@127.0.0.1:5236?schema=SYSDBA`）。
+  - 若 `database.dsn` 为空，则按 `database.dameng.host/port/user/password/dbname` 自动拼接，
+    其中 `dbname` 会映射为达梦 DSN 的 `schema` 参数。
+
 ## 默认管理员说明
 - 当 `auth.init_admin_enabled=true` 且模式非 config 时，后端启动会尝试初始化 admin 用户（若不存在）。
 - SQL 也提供了默认 admin 初始化语句。
@@ -53,7 +60,7 @@
 - `make docker-build` / `make docker-run` / `make docker-push` / `make docker-build-run` / `make deploy`：容器与部署入口
 
 ## 当前限制说明
-- 达梦当前采用 MySQL 兼容策略接入（可运行基线），生产环境建议替换为专用驱动与方言增强。
+- 达梦已切换为专用 GORM 驱动接入（`github.com/godoes/gorm-dameng`）。
 - `ServerAnalyzer` 为占位实现。
 
 

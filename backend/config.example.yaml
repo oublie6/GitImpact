@@ -30,9 +30,13 @@ database:
   dameng:
     host: "127.0.0.1"
     port: "5236"
-    dbname: "GITIMPACT"
+    dbname: "SYSDBA" # 作为 schema 使用
     user: "SYSDBA"
     password: "SYSDBA"
+    # 当 database.type=dameng 且 database.dsn 为空时，会自动拼接：
+    # dm://<user>:<password>@<host>:<port>?schema=<dbname>
+    # 也可直接设置 database.dsn 覆盖，如：
+    # dsn: "dm://SYSDBA:SYSDBA@127.0.0.1:5236?schema=SYSDBA"
 opencode:
   binary_path: "opencode"
   attach_url: "http://127.0.0.1:4096"
