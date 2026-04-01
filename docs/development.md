@@ -9,6 +9,7 @@
 - `make build`
 - `make test`
 - `make build-linux-amd64`
+- `docker build -t gitimpact/backend:test .`
 
 ## Windows PowerShell 交叉编译 Linux x64
 在仓库根目录执行：
@@ -32,7 +33,7 @@ make build-linux-amd64
 在仓库根目录执行：
 
 ```bash
-make docker-build
+docker build -t gitimpact/backend:test .
 ```
 
-该构建会使用根目录 `Dockerfile`，并在容器内基于 `backend/vendor` 进行 `GOFLAGS=-mod=vendor` 构建。
+该构建会使用根目录 `Dockerfile`，并在容器内基于 `backend/vendor` 进行 `GOFLAGS=-mod=vendor` 构建，不联网拉取 Go 依赖。

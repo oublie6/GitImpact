@@ -56,8 +56,14 @@
 ## Makefile 使用说明
 - `make build`：构建后端二进制到 `bin/`
 - `make test`：执行后端测试（vendor 模式）
+- `make build-linux-amd64`：交叉编译 Linux amd64 后端二进制到 `bin/`
 - `make clean`：清理构建产物
 - `make docker-build` / `make docker-run` / `make docker-push` / `make docker-build-run` / `make deploy`：容器与部署入口
+
+## Docker 构建
+- 直接执行：`docker build -t gitimpact/backend:test .`
+- 或使用 Makefile：`make docker-build`
+- Dockerfile 在 builder 阶段使用 `backend/vendor` + `GOFLAGS=-mod=vendor` 离线构建，不拉取远端依赖。
 
 ## 当前限制说明
 - 达梦已切换为专用 GORM 驱动接入（`github.com/godoes/gorm-dameng`）。
@@ -77,4 +83,4 @@ go build -trimpath -ldflags "-s -w" -o ../bin/gitimpact-backend-linux-amd64 ./cm
 也可以直接在仓库根目录执行：`make build-linux-amd64`。
 
 ## Docker 构建验证
-在仓库根目录执行：`make docker-build`。
+在仓库根目录执行：`docker build -t gitimpact/backend:test .`。
