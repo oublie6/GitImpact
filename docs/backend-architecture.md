@@ -30,7 +30,7 @@ sequenceDiagram
     participant Worker as TaskWorker
     participant Router as router.Register
     Main->>Config: 加载 config.yaml
-    Main->>DB: 初始化数据库和 AutoMigrate
+    Main->>DB: 初始化数据库连接并校验核心表
     Main->>Main: 创建 runtime 目录
     Main->>Repo: 创建各 Repository
     Main->>Service: 创建各 Service
@@ -49,7 +49,8 @@ sequenceDiagram
 ### repository
 
 - 选择 MySQL 或达梦驱动。
-- 执行 `AutoMigrate`。
+- 默认不执行 `AutoMigrate`，仅在显式开启配置时执行（不推荐达梦开启）。
+- 启动阶段校验核心表是否已通过 `sql/mysql/init.sql` 或 `sql/dameng/init.sql` 初始化。
 - 提供实体 CRUD、任务日志与产物写入。
 
 ### service

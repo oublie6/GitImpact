@@ -28,6 +28,9 @@ if (-not (Test-Path $configPath)) {
     Copy-Item -Force (Join-Path $bundleDir "config.example.yaml") $configPath
     Write-Host "[run-offline] created config.yaml from config.example.yaml"
 }
+Write-Host "[run-offline] IMPORTANT: initialize database before startup."
+Write-Host "[run-offline] mysql:  sql/mysql/init.sql"
+Write-Host "[run-offline] dameng: sql/dameng/init.sql"
 $env:GITIMPACT_CONFIG = $configPath
 $binaryPath = Join-Path $bundleDir "gitimpact-backend.exe"
 if (-not (Test-Path $binaryPath)) {

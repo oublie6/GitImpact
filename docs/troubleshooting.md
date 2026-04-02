@@ -33,6 +33,25 @@
 - 初始化 SQL 是否执行过
 - 网络和防火墙是否允许连接
 
+## 启动报错：database schema is not initialized
+
+现象：
+
+- 日志提示缺失核心表（如 `users`、`analysis_tasks`）
+- 同时提示需要执行 `sql/mysql/init.sql` 或 `sql/dameng/init.sql`
+
+原因：
+
+- 项目默认禁用 AutoMigrate，不会在启动时自动建表
+
+处理：
+
+1. 根据 `database.type` 执行初始化脚本
+   - MySQL：`sql/mysql/init.sql`
+   - 达梦：`sql/dameng/init.sql`
+2. 再次启动服务
+3. 可先执行 `make init-db` 查看推荐脚本路径，避免选错
+
 ## OpenCode 调用失败
 
 常见原因：

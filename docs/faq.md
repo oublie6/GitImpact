@@ -39,6 +39,15 @@
 
 当前没有服务端 token 吊销或黑名单机制，登出只清理前端本地状态。
 
-## 10. 为什么有 SQL 初始化脚本，还要 AutoMigrate？
+## 10. 为什么现在默认禁用 AutoMigrate？
 
-SQL 脚本用于显式初始化，AutoMigrate 用于降低最小运行门槛。正式环境建议两者结合使用，但以显式 SQL 为主。
+因为在达梦环境中，AutoMigrate 可能触发兼容性问题（例如 MySQL 类型透传、重复加列等），会降低部署稳定性。
+
+当前策略是：
+
+- 默认关闭 `database.auto_migrate`
+- 统一由手工 SQL 初始化表结构
+  - MySQL：`sql/mysql/init.sql`
+  - 达梦：`sql/dameng/init.sql`
+
+仅建议在本地临时调试时显式开启 AutoMigrate，且不推荐在达梦环境开启。

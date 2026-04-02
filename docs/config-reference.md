@@ -109,6 +109,24 @@ server:
   - MySQL 时直接作为 GORM DSN
   - 达梦时若填写，直接作为最终 DSN
 
+### `database.auto_migrate`
+
+- 类型：bool
+- 默认值：`false`
+- 必填：否
+- 作用：是否在启动时执行 GORM AutoMigrate
+
+强烈建议：
+
+- 生产环境保持 `false`
+- 达梦环境保持 `false`（不推荐开启）
+
+原因：
+
+- AutoMigrate 在达梦场景存在兼容性风险（如 MySQL 类型透传、重复加列等）
+- 项目主路径已切换为手工 SQL 初始化（`sql/mysql/init.sql` / `sql/dameng/init.sql`）
+- 未初始化数据库时，服务会在启动时报错并提示执行对应 SQL 文件
+
 ### `database.mysql.*`
 
 - 类型：map[string]string

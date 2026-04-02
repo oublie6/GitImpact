@@ -20,6 +20,7 @@ auth:
       status: active
 database:
   type: mysql
+  auto_migrate: false # 默认禁用，生产与达梦场景必须先执行 sql/*/init.sql
   dsn: "root:root@tcp(127.0.0.1:3306)/gitimpact?charset=utf8mb4&parseTime=True&loc=Local"
   mysql:
     host: "127.0.0.1"

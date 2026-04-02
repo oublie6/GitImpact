@@ -14,7 +14,7 @@
 - MySQL：`sql/mysql/init.sql`
 - 达梦：`sql/dameng/init.sql`
 
-同时，后端启动时会执行 `AutoMigrate`，用于保证最小可运行结构存在。正式环境仍建议先执行初始化 SQL，再启动服务。
+后端默认 **不再执行** `AutoMigrate`。当前统一要求先执行初始化 SQL 再启动服务；未初始化时启动会报缺失核心表并退出。
 
 ## 数据实体
 
