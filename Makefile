@@ -28,7 +28,7 @@ SET_LINUX_ENV = CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOFLAGS="$(GOFLAGS)"
 CLEAN_DIRS = rm -rf $(BIN_DIR) dist tmp $(GO_TMP_DIR)
 endif
 
-.PHONY: build build-linux-amd64 test lint clean docker-build docker-run docker-push docker-build-run deploy frontend-build release-build package-offline verify-offline
+.PHONY: build build-linux-amd64 test lint clean docker-build docker-run docker-push docker-build-run deploy frontend-build release-build package-offline verify-offline init-db init-db-mysql init-db-dameng
 
 build:
 	$(MKDIR_BIN)
@@ -75,3 +75,12 @@ package-offline:
 
 verify-offline:
 	$(POWERSHELL) scripts/verify-offline.ps1
+
+init-db:
+	./scripts/init-db.sh
+
+init-db-mysql:
+	./scripts/init-db.sh mysql
+
+init-db-dameng:
+	./scripts/init-db.sh dameng

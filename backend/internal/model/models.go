@@ -112,12 +112,12 @@ type AnalysisReport struct {
 	// TaskID 是与任务的一对一关联键。
 	TaskID uint `gorm:"index;not null" json:"task_id"`
 	// MarkdownReport 是面向人阅读的分析结果。
-	MarkdownReport string `gorm:"type:longtext" json:"markdown_report"`
+	MarkdownReport string `gorm:"type:text" json:"markdown_report"`
 	// StructuredReport 是结构化 JSON 字符串。
-	StructuredReport string `gorm:"type:longtext" json:"structured_report"`
+	StructuredReport string `gorm:"type:text" json:"structured_report"`
 	// RawStdout / RawStderr 保存 OpenCode 原始输出，便于排障。
-	RawStdout string    `gorm:"type:longtext" json:"raw_stdout"`
-	RawStderr string    `gorm:"type:longtext" json:"raw_stderr"`
+	RawStdout string    `gorm:"type:text" json:"raw_stdout"`
+	RawStderr string    `gorm:"type:text" json:"raw_stderr"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

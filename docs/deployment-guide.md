@@ -29,6 +29,24 @@
 - 不建议继续使用示例 `config_users`。
 - 控制 `local_cache_dir` 和 `workdir` 的磁盘权限。
 - 为数据库和运行目录设计备份策略。
+- **先初始化数据库再启动服务**：默认禁用 AutoMigrate，不会在启动时自动建表。
+
+## 数据库初始化（必做）
+
+GitImpact 默认 `database.auto_migrate: false`，必须手工执行初始化 SQL：
+
+- MySQL：`sql/mysql/init.sql`
+- 达梦：`sql/dameng/init.sql`
+
+可使用统一入口先确认脚本路径：
+
+```bash
+make init-db
+```
+
+> 说明：该入口会根据 `backend/config.yaml` 的 `database.type` 给出对应 SQL 指引，避免选错脚本。
+
+如果未初始化，后端会在启动时直接失败，并提示缺失核心表以及应执行的 SQL 文件。
 
 ## Docker 构建与运行
 
@@ -68,7 +86,8 @@ powershell -ExecutionPolicy Bypass -File scripts/package-offline.ps1
 1. 解压离线包
 2. 复制 `config.example.yaml` 为 `config.yaml`
 3. 调整数据库与 OpenCode 配置
-4. 运行 `run-offline.ps1` 或直接启动后端二进制
+4. 先执行 `sql/mysql/init.sql` 或 `sql/dameng/init.sql`
+5. 运行 `run-offline.ps1` 或直接启动后端二进制
 
 ## 前端静态资源部署说明
 

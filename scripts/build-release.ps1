@@ -37,5 +37,15 @@ finally {
 
 Copy-Item -Force (Join-Path $repoRoot 'backend\config.example.yaml') (Join-Path $outputPath 'config.example.yaml')
 Copy-Item -Recurse -Force (Join-Path $repoRoot 'backend\web') (Join-Path $outputPath 'web')
+Copy-Item -Recurse -Force (Join-Path $repoRoot 'sql') (Join-Path $outputPath 'sql')
+
+$deployNote = @'
+GitImpact 数据库初始化要求（默认策略）
+1) 启动前必须先执行 SQL 初始化脚本，默认不会执行 GORM AutoMigrate。
+2) MySQL 使用：sql/mysql/init.sql
+3) 达梦使用：sql/dameng/init.sql
+4) 若未初始化，服务会在启动阶段报错并提示缺失核心表。
+'@
+Set-Content -Path (Join-Path $outputPath 'DATABASE-INIT.txt') -Value $deployNote -Encoding UTF8
 
 Write-Host '[build-release] release output ready at' $outputPath

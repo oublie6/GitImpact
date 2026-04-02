@@ -1,10 +1,11 @@
 // Package repository 提供数据库初始化与数据访问封装。
 //
-// db.go 负责根据配置选择具体数据库驱动，并在服务启动时执行自动迁移。
+// db.go 负责根据配置选择具体数据库驱动，并在启动时校验核心表是否已初始化。
 package repository
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -38,11 +39,19 @@ func NewDB(cfg config.DatabaseConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	// 当前项目依赖 GORM 自动迁移保证最小可运行环境，不替代正式初始化 SQL。
-	if err := db.AutoMigrate(
-		&model.User{}, &model.Repository{}, &model.AnalysisTask{}, &model.AnalysisReport{},
-		&model.TaskLog{}, &model.SystemSetting{}, &model.TaskArtifact{},
-	); err != nil {
+	if cfg.AutoMigrate {
+		log.Println("[db] database.auto_migrate=true, applying GORM AutoMigrate (not recommended for dameng)")
+		if err := db.AutoMigrate(
+			&model.User{}, &model.Repository{}, &model.AnalysisTask{}, &model.AnalysisReport{},
+			&model.TaskLog{}, &model.SystemSetting{}, &model.TaskArtifact{},
+		); err != nil {
+			return nil, fmt.Errorf("auto migrate failed: %w", err)
+		}
+	} else {
+		log.Println("[db] database.auto_migrate=false, skip GORM AutoMigrate and require manual SQL initialization")
+	}
+
+	if err := verifySchemaInitialized(db, cfg.Type); err != nil {
 		return nil, err
 	}
 	return db, nil
@@ -71,4 +80,27 @@ func resolveDamengDSN(cfg config.DatabaseConfig) (string, error) {
 		options["schema"] = schema
 	}
 	return dameng.BuildUrl(user, password, host, port, options), nil
+}
+
+func verifySchemaInitialized(db *gorm.DB, dbType string) error {
+	missingTables := make([]string, 0, 4)
+	coreTables := []string{"users", "repositories", "analysis_tasks", "analysis_reports"}
+	for _, table := range coreTables {
+		if !db.Migrator().HasTable(table) {
+			missingTables = append(missingTables, table)
+		}
+	}
+	if len(missingTables) == 0 {
+		return nil
+	}
+
+	sqlPath := "sql/mysql/init.sql"
+	if strings.EqualFold(strings.TrimSpace(dbType), "dameng") {
+		sqlPath = "sql/dameng/init.sql"
+	}
+	return fmt.Errorf(
+		"database schema is not initialized, missing core table(s): %s; please run %s before starting GitImpact",
+		strings.Join(missingTables, ", "),
+		sqlPath,
+	)
 }

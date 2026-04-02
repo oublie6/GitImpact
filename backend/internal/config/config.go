@@ -50,10 +50,11 @@ type ConfigUser struct {
 
 // DatabaseConfig 描述数据库类型、直连 DSN 与分数据库类型的补充字段。
 type DatabaseConfig struct {
-	Type   string            `yaml:"type"`
-	DSN    string            `yaml:"dsn"`
-	MySQL  map[string]string `yaml:"mysql"`
-	Dameng map[string]string `yaml:"dameng"`
+	Type        string            `yaml:"type"`
+	DSN         string            `yaml:"dsn"`
+	AutoMigrate bool              `yaml:"auto_migrate"`
+	MySQL       map[string]string `yaml:"mysql"`
+	Dameng      map[string]string `yaml:"dameng"`
 }
 
 // OpenCodeConfig 描述 OpenCode CLI 的调用方式。
